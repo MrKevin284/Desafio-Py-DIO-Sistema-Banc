@@ -81,15 +81,18 @@ def cadastrar_usuario():
     cpf = cpf_cadastro_entry.get()
     endereco = endereco_cadastro_entry.get()
 
-    # Validar formato de data (YYYY-MM-DD)
-    if not re.match(r'\d{4}-\d{2}-\d{2}', data_nascimento):
-        resultado_label.config(text="Operação falhou! Data de nascimento no formato incorreto (YYYY-MM-DD).")
+    # Validar formato de data (DD-MM-YYYY)
+    if re.match(r'\d{2}-\d{2}-\d{4}', data_nascimento):
+        # Converter para o formato interno (YYYY-MM-DD)
+        data_nascimento = '-'.join(data_nascimento.split('-')[::-1])
+    else:
+        resultado_label.config(text="Operação falhou! Data de nascimento no formato incorreto (DD-MM-YYYY).")
         return
 
-    # Validar formato de CPF (AAA.AAA.AAA-AA)
-    if not re.match(r'\d{3}\.\d{3}\.\d{3}-\d{2}', cpf):
-        resultado_label.config(text="Operação falhou! CPF no formato incorreto (AAA.AAA.AAA-AA).")
-        return
+    # Validar formato de CPF (inserir pontos e traço)
+    cpf = re.sub(r'[^0-9]', '', cpf)
+    if len(cpf) == 11:
+        cpf = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
 
     # Verifica se o CPF já está cadastrado
     cpf_existente = any(usuario["cpf"] == cpf for usuario in usuarios)
@@ -126,6 +129,20 @@ def criar_conta_corrente():
             "numero_saques": 0,
             "limite_saques": 3
         })
+
+        # Criar uma janela para exibir as informações da conta
+        nova_janela = tk.Toplevel(root)
+        nova_janela.title("Informações da Conta")
+        nova_janela.geometry("300x150")
+
+        tk.Label(nova_janela, text=f"Número da Conta: {numero_conta}").pack()
+        tk.Label(nova_janela, text=f"Agência: 0001").pack()
+        tk.Label(nova_janela, text=f"Nome do Titular: {usuario['nome']}").pack()
+        tk.Label(nova_janela, text=f"CPF do Titular: {usuario['cpf']}").pack()
+        tk.Label(nova_janela, text=f"Saldo: R$ 0.00").pack()
+        tk.Label(nova_janela, text=f"Limite: R$ 500.00").pack()
+        tk.Label(nova_janela, text=f"Número de Saques Restantes: 3").pack()
+
         resultado_label.config(text="Conta corrente criada com sucesso!")
 
 # Função para realizar transferência
@@ -192,9 +209,9 @@ saldo_text = tk.Label(root, text="")
 cadastrar_usuario_label = tk.Label(root, text="Cadastrar Usuário")
 nome_cadastro_label = tk.Label(root, text="Nome:")
 nome_cadastro_entry = tk.Entry(root)
-data_nascimento_cadastro_label = tk.Label(root, text="Data de Nascimento (YYYY-MM-DD):")
+data_nascimento_cadastro_label = tk.Label(root, text="Data de Nascimento (DD-MM-YYYY):")
 data_nascimento_cadastro_entry = tk.Entry(root)
-cpf_cadastro_label = tk.Label(root, text="CPF (AAA.AAA.AAA-AA):")
+cpf_cadastro_label = tk.Label(root, text="CPF (inserir pontos e traço):")
 cpf_cadastro_entry = tk.Entry(root)
 endereco_cadastro_label = tk.Label(root, text="Endereço:")
 endereco_cadastro_entry = tk.Entry(root)
