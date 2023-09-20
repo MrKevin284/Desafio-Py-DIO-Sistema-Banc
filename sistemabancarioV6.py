@@ -71,8 +71,30 @@ def exibir_extrato():
         extrato = conta['extrato']
         extrato_text.config(text=extrato)
         saldo_text.config(text=f"Saldo: R$ {saldo:.2f}")
+
+        # Adiciona botão para mostrar informações da conta
+        informacoes_button = tk.Button(root, text="Informações da Conta", command=lambda: mostrar_informacoes_conta(conta))
+        informacoes_button.grid(row=4, column=5)
     else:
         resultado_label.config(text="Conta não encontrada.")
+
+# Função para mostrar informações da conta em uma nova janela
+def mostrar_informacoes_conta(conta):
+    informacoes_window = tk.Toplevel(root)
+    informacoes_window.title("Informações da Conta")
+    informacoes_label = tk.Label(informacoes_window, text=f"Informações da Conta\n\nNúmero da Conta: {conta['numero_conta']}\nAgência: {conta['agencia']}\nSaldo: R$ {conta['saldo']:.2f}\nLimite de Saques: {conta['limite_saques']}\n")
+    informacoes_label.pack()
+
+# Função para atualizar o limite de saques
+def atualizar_limite_saques():
+    numero_conta = numero_conta_atualizar_limite_entry.get()
+    novo_limite = int(novo_limite_entry.get())
+    conta = next((conta for conta in contas if conta["numero_conta"] == int(numero_conta)), None)
+    if conta is not None and novo_limite >= 0:
+        conta['limite_saques'] = novo_limite
+        resultado_label.config(text="Limite de saques atualizado com sucesso.")
+    else:
+        resultado_label.config(text="Operação falhou! Conta não encontrada ou limite inválido.")
 
 # Função para cadastrar usuário
 def cadastrar_usuario():
@@ -82,17 +104,14 @@ def cadastrar_usuario():
     endereco = endereco_cadastro_entry.get()
 
     # Validar formato de data (DD-MM-YYYY)
-    if re.match(r'\d{2}-\d{2}-\d{4}', data_nascimento):
-        # Converter para o formato interno (YYYY-MM-DD)
-        data_nascimento = '-'.join(data_nascimento.split('-')[::-1])
-    else:
+    if not re.match(r'\d{2}-\d{2}-\d{4}', data_nascimento):
         resultado_label.config(text="Operação falhou! Data de nascimento no formato incorreto (DD-MM-YYYY).")
         return
 
     # Validar formato de CPF (inserir pontos e traço)
-    cpf = re.sub(r'[^0-9]', '', cpf)
-    if len(cpf) == 11:
-        cpf = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+    if not re.match(r'\d{3}\.\d{3}\.\d{3}-\d{2}', cpf):
+        resultado_label.config(text="Operação falhou! CPF no formato incorreto (inserir pontos e traço).")
+        return
 
     # Verifica se o CPF já está cadastrado
     cpf_existente = any(usuario["cpf"] == cpf for usuario in usuarios)
@@ -129,20 +148,6 @@ def criar_conta_corrente():
             "numero_saques": 0,
             "limite_saques": 3
         })
-
-        # Criar uma janela para exibir as informações da conta
-        nova_janela = tk.Toplevel(root)
-        nova_janela.title("Informações da Conta")
-        nova_janela.geometry("300x150")
-
-        tk.Label(nova_janela, text=f"Número da Conta: {numero_conta}").pack()
-        tk.Label(nova_janela, text=f"Agência: 0001").pack()
-        tk.Label(nova_janela, text=f"Nome do Titular: {usuario['nome']}").pack()
-        tk.Label(nova_janela, text=f"CPF do Titular: {usuario['cpf']}").pack()
-        tk.Label(nova_janela, text=f"Saldo: R$ 0.00").pack()
-        tk.Label(nova_janela, text=f"Limite: R$ 500.00").pack()
-        tk.Label(nova_janela, text=f"Número de Saques Restantes: 3").pack()
-
         resultado_label.config(text="Conta corrente criada com sucesso!")
 
 # Função para realizar transferência
@@ -244,6 +249,14 @@ numero_conta_label = tk.Label(root, text="", fg="blue")
 # Resultado das operações
 resultado_label = tk.Label(root, text="", fg="red")
 
+# Adiciona botão para atualizar limite de saques
+atualizar_limite_label = tk.Label(root, text="Atualizar Limite de Saques")
+numero_conta_atualizar_limite_label = tk.Label(root, text="Número da Conta:")
+numero_conta_atualizar_limite_entry = tk.Entry(root)
+novo_limite_label = tk.Label(root, text="Novo Limite:")
+novo_limite_entry = tk.Entry(root)
+atualizar_limite_button = tk.Button(root, text="Atualizar Limite", command=atualizar_limite_saques)
+
 # Posicionamento de widgets na janela
 saque_label.grid(row=0, column=0)
 numero_conta_saque_label.grid(row=1, column=0)
@@ -297,7 +310,14 @@ numero_conta_saldo_label.grid(row=12, column=4)
 numero_conta_saldo_entry.grid(row=12, column=5)
 consultar_saldo_button.grid(row=13, column=4)
 
-sair_button.grid(row=14, column=5)
-resultado_label.grid(row=15, column=0, columnspan=6)
+atualizar_limite_label.grid(row=14, column=0)
+numero_conta_atualizar_limite_label.grid(row=15, column=0)
+numero_conta_atualizar_limite_entry.grid(row=15, column=1)
+novo_limite_label.grid(row=16, column=0)
+novo_limite_entry.grid(row=16, column=1)
+atualizar_limite_button.grid(row=17, column=0)
+
+sair_button.grid(row=18, column=5)
+resultado_label.grid(row=19, column=0, columnspan=6)
 
 root.mainloop()
