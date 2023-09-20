@@ -1,4 +1,6 @@
 import tkinter as tk
+from tkinter import ttk
+import re  # Módulo para validar CPF
 
 # Lista para armazenar os usuários
 usuarios = []
@@ -36,6 +38,7 @@ def saque():
         conta['saldo'] = saldo
         conta['extrato'] = extrato
         conta['numero_saques'] = numero_saques
+        numero_conta_label.config(text=f"Número da Conta: {numero_conta}")
         resultado_label.config(text="Saque realizado com sucesso.")
     else:
         resultado_label.config(text="Conta não encontrada.")
@@ -78,11 +81,21 @@ def cadastrar_usuario():
     cpf = cpf_cadastro_entry.get()
     endereco = endereco_cadastro_entry.get()
 
+    # Validar formato de data (YYYY-MM-DD)
+    if not re.match(r'\d{4}-\d{2}-\d{2}', data_nascimento):
+        resultado_label.config(text="Operação falhou! Data de nascimento no formato incorreto (YYYY-MM-DD).")
+        return
+
+    # Validar formato de CPF (AAA.AAA.AAA-AA)
+    if not re.match(r'\d{3}\.\d{3}\.\d{3}-\d{2}', cpf):
+        resultado_label.config(text="Operação falhou! CPF no formato incorreto (AAA.AAA.AAA-AA).")
+        return
+
     # Verifica se o CPF já está cadastrado
     cpf_existente = any(usuario["cpf"] == cpf for usuario in usuarios)
 
-    if cpf_existente:
-        resultado_label.config(text="Operação falhou! Já existe um usuário cadastrado com o CPF informado.")
+    if cpf_existente or not nome or not cpf:
+        resultado_label.config(text="Operação falhou! Preencha todos os campos e/ou CPF já cadastrado.")
     else:
         usuarios.append({
             "nome": nome,
@@ -179,9 +192,9 @@ saldo_text = tk.Label(root, text="")
 cadastrar_usuario_label = tk.Label(root, text="Cadastrar Usuário")
 nome_cadastro_label = tk.Label(root, text="Nome:")
 nome_cadastro_entry = tk.Entry(root)
-data_nascimento_cadastro_label = tk.Label(root, text="Data de Nascimento:")
+data_nascimento_cadastro_label = tk.Label(root, text="Data de Nascimento (YYYY-MM-DD):")
 data_nascimento_cadastro_entry = tk.Entry(root)
-cpf_cadastro_label = tk.Label(root, text="CPF:")
+cpf_cadastro_label = tk.Label(root, text="CPF (AAA.AAA.AAA-AA):")
 cpf_cadastro_entry = tk.Entry(root)
 endereco_cadastro_label = tk.Label(root, text="Endereço:")
 endereco_cadastro_entry = tk.Entry(root)
@@ -208,6 +221,9 @@ consultar_saldo_button = tk.Button(root, text="Consultar Saldo", command=consult
 
 sair_button = tk.Button(root, text="Sair", command=sair)
 
+# Rótulo para exibir o número da conta selecionada
+numero_conta_label = tk.Label(root, text="", fg="blue")
+
 # Resultado das operações
 resultado_label = tk.Label(root, text="", fg="red")
 
@@ -218,45 +234,53 @@ numero_conta_saque_entry.grid(row=1, column=1)
 valor_saque_label.grid(row=2, column=0)
 valor_saque_entry.grid(row=2, column=1)
 saque_button.grid(row=3, column=0)
+
 deposito_label.grid(row=0, column=2)
 numero_conta_deposito_label.grid(row=1, column=2)
 numero_conta_deposito_entry.grid(row=1, column=3)
 valor_deposito_label.grid(row=2, column=2)
 valor_deposito_entry.grid(row=2, column=3)
 deposito_button.grid(row=3, column=2)
+
 extrato_label.grid(row=0, column=4)
 numero_conta_extrato_label.grid(row=1, column=4)
 numero_conta_extrato_entry.grid(row=1, column=5)
 extrato_button.grid(row=2, column=4)
 extrato_text.grid(row=3, column=4, columnspan=2)
 saldo_text.grid(row=4, column=4, columnspan=2)
-cadastrar_usuario_label.grid(row=5, column=0)
-nome_cadastro_label.grid(row=6, column=0)
-nome_cadastro_entry.grid(row=6, column=1)
-data_nascimento_cadastro_label.grid(row=7, column=0)
-data_nascimento_cadastro_entry.grid(row=7, column=1)
-cpf_cadastro_label.grid(row=8, column=0)
-cpf_cadastro_entry.grid(row=8, column=1)
-endereco_cadastro_label.grid(row=9, column=0)
-endereco_cadastro_entry.grid(row=9, column=1)
-cadastrar_usuario_button.grid(row=10, column=0)
-criar_conta_corrente_label.grid(row=5, column=2)
-cpf_conta_corrente_label.grid(row=6, column=2)
-cpf_conta_corrente_entry.grid(row=6, column=3)
-criar_conta_corrente_button.grid(row=7, column=2)
-transferencia_label.grid(row=5, column=4)
-numero_conta_origem_transferencia_label.grid(row=6, column=4)
-numero_conta_origem_transferencia_entry.grid(row=6, column=5)
-numero_conta_destino_transferencia_label.grid(row=7, column=4)
-numero_conta_destino_transferencia_entry.grid(row=7, column=5)
-valor_transferencia_label.grid(row=8, column=4)
-valor_transferencia_entry.grid(row=8, column=5)
-transferencia_button.grid(row=9, column=4)
-consultar_saldo_label.grid(row=10, column=4)
-numero_conta_saldo_label.grid(row=11, column=4)
-numero_conta_saldo_entry.grid(row=11, column=5)
-consultar_saldo_button.grid(row=12, column=4)
-sair_button.grid(row=13, column=5)
-resultado_label.grid(row=14, column=0, columnspan=6)
+numero_conta_label.grid(row=5, column=4, columnspan=2)
+
+cadastrar_usuario_label.grid(row=6, column=0)
+nome_cadastro_label.grid(row=7, column=0)
+nome_cadastro_entry.grid(row=7, column=1)
+data_nascimento_cadastro_label.grid(row=8, column=0)
+data_nascimento_cadastro_entry.grid(row=8, column=1)
+cpf_cadastro_label.grid(row=9, column=0)
+cpf_cadastro_entry.grid(row=9, column=1)
+endereco_cadastro_label.grid(row=10, column=0)
+endereco_cadastro_entry.grid(row=10, column=1)
+cadastrar_usuario_button.grid(row=11, column=0)
+
+criar_conta_corrente_label.grid(row=6, column=2)
+cpf_conta_corrente_label.grid(row=7, column=2)
+cpf_conta_corrente_entry.grid(row=7, column=3)
+criar_conta_corrente_button.grid(row=8, column=2)
+
+transferencia_label.grid(row=6, column=4)
+numero_conta_origem_transferencia_label.grid(row=7, column=4)
+numero_conta_origem_transferencia_entry.grid(row=7, column=5)
+numero_conta_destino_transferencia_label.grid(row=8, column=4)
+numero_conta_destino_transferencia_entry.grid(row=8, column=5)
+valor_transferencia_label.grid(row=9, column=4)
+valor_transferencia_entry.grid(row=9, column=5)
+transferencia_button.grid(row=10, column=4)
+
+consultar_saldo_label.grid(row=11, column=4)
+numero_conta_saldo_label.grid(row=12, column=4)
+numero_conta_saldo_entry.grid(row=12, column=5)
+consultar_saldo_button.grid(row=13, column=4)
+
+sair_button.grid(row=14, column=5)
+resultado_label.grid(row=15, column=0, columnspan=6)
 
 root.mainloop()
