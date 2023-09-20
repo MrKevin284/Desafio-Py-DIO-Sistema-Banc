@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import re  # Módulo para validar CPF
+import re
 
 # Lista para armazenar os usuários
 usuarios = []
@@ -198,6 +198,36 @@ def mostrar_ajuda_limite_saques():
                                              "O novo limite deve ser um número inteiro não negativo.")
     ajuda_text.pack(padx=20, pady=20)
 
+# Função para consultar conta por CPF
+def consultar_conta_por_cpf():
+    cpf_consulta = cpf_consulta_entry.get()
+    conta = next((conta for conta in contas if conta["usuario"]["cpf"] == cpf_consulta), None)
+    if conta is not None:
+        # Abrir janela para exibir informações da conta
+        abrir_janela_info_conta(conta)
+    else:
+        resultado_label.config(text="Conta não encontrada.")
+
+# Função para abrir janela com informações da conta
+def abrir_janela_info_conta(conta):
+    info_window = tk.Toplevel(root)
+    info_window.title("Informações da Conta")
+
+    info_label = tk.Label(info_window, text=f"Informações da Conta")
+    info_label.pack()
+
+    numero_conta_label = tk.Label(info_window, text=f"Número da Conta: {conta['numero_conta']}")
+    numero_conta_label.pack()
+
+    agencia_label = tk.Label(info_window, text=f"Agência: {conta['agencia']}")
+    agencia_label.pack()
+
+    limite_label = tk.Label(info_window, text=f"Limite: R$ {conta['limite']:.2f}")
+    limite_label.pack()
+
+    saldo_label = tk.Label(info_window, text=f"Saldo: R$ {conta['saldo']:.2f}")
+    saldo_label.pack()
+
 # Função para sair do programa
 def sair():
     root.quit()
@@ -275,6 +305,12 @@ numero_conta_label = tk.Label(root, text="", fg="blue")
 # Resultado das operações
 resultado_label = tk.Label(root, text="", fg="red")
 
+# Adicionar campo para consultar conta por CPF
+consultar_conta_por_cpf_label = tk.Label(root, text="Consultar Conta por CPF")
+cpf_consulta_label = tk.Label(root, text="CPF do Usuário:")
+cpf_consulta_entry = tk.Entry(root)
+consultar_conta_button = tk.Button(root, text="Consultar Conta", command=consultar_conta_por_cpf)
+
 # Posicionamento de widgets na janela
 saque_label.grid(row=0, column=0)
 numero_conta_saque_label.grid(row=1, column=0)
@@ -323,20 +359,28 @@ valor_transferencia_label.grid(row=9, column=4)
 valor_transferencia_entry.grid(row=9, column=5)
 transferencia_button.grid(row=10, column=4)
 
-consultar_saldo_label.grid(row=11, column=4)
-numero_conta_saldo_label.grid(row=12, column=4)
-numero_conta_saldo_entry.grid(row=12, column=5)
-consultar_saldo_button.grid(row=13, column=4)
+consultar_saldo_label.grid(row=6, column=6)
+numero_conta_saldo_label.grid(row=7, column=6)
+numero_conta_saldo_entry.grid(row=7, column=7)
+consultar_saldo_button.grid(row=8, column=6)
 
-atualizar_limite_label.grid(row=14, column=0)
-numero_conta_atualizar_limite_label.grid(row=15, column=0)
-numero_conta_atualizar_limite_entry.grid(row=15, column=1)
-novo_limite_label.grid(row=16, column=0)
-novo_limite_entry.grid(row=16, column=1)
-atualizar_limite_button.grid(row=17, column=0)
-ajuda_limite_button.grid(row=17, column=1)
+atualizar_limite_label.grid(row=11, column=2)
+numero_conta_atualizar_limite_label.grid(row=12, column=2)
+numero_conta_atualizar_limite_entry.grid(row=12, column=3)
+novo_limite_label.grid(row=13, column=2)
+novo_limite_entry.grid(row=13, column=3)
+atualizar_limite_button.grid(row=14, column=2)
+ajuda_limite_button.grid(row=14, column=3)
 
-sair_button.grid(row=18, column=5)
-resultado_label.grid(row=19, column=0, columnspan=6)
+sair_button.grid(row=15, column=0, columnspan=8)
 
+resultado_label.grid(row=16, column=0, columnspan=8)
+
+# Adicionar campo para consultar conta por CPF
+consultar_conta_por_cpf_label.grid(row=11, column=6)
+cpf_consulta_label.grid(row=12, column=6)
+cpf_consulta_entry.grid(row=12, column=7)
+consultar_conta_button.grid(row=13, column=6)
+
+# Iniciar a interface gráfica
 root.mainloop()
