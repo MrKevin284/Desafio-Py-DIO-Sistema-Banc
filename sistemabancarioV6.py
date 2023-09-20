@@ -71,37 +71,15 @@ def exibir_extrato():
         extrato = conta['extrato']
         extrato_text.config(text=extrato)
         saldo_text.config(text=f"Saldo: R$ {saldo:.2f}")
-
-        # Adiciona botão para mostrar informações da conta
-        informacoes_button = tk.Button(root, text="Informações da Conta", command=lambda: mostrar_informacoes_conta(conta))
-        informacoes_button.grid(row=4, column=5)
     else:
         resultado_label.config(text="Conta não encontrada.")
-
-# Função para mostrar informações da conta em uma nova janela
-def mostrar_informacoes_conta(conta):
-    informacoes_window = tk.Toplevel(root)
-    informacoes_window.title("Informações da Conta")
-    informacoes_label = tk.Label(informacoes_window, text=f"Informações da Conta\n\nNúmero da Conta: {conta['numero_conta']}\nAgência: {conta['agencia']}\nSaldo: R$ {conta['saldo']:.2f}\nLimite de Saques: {conta['limite_saques']}\n")
-    informacoes_label.pack()
-
-# Função para atualizar o limite de saques
-def atualizar_limite_saques():
-    numero_conta = numero_conta_atualizar_limite_entry.get()
-    novo_limite = int(novo_limite_entry.get())
-    conta = next((conta for conta in contas if conta["numero_conta"] == int(numero_conta)), None)
-    if conta is not None and novo_limite >= 0:
-        conta['limite_saques'] = novo_limite
-        resultado_label.config(text="Limite de saques atualizado com sucesso.")
-    else:
-        resultado_label.config(text="Operação falhou! Conta não encontrada ou limite inválido.")
 
 # Função para cadastrar usuário
 def cadastrar_usuario():
     nome = nome_cadastro_entry.get()
     data_nascimento = data_nascimento_cadastro_entry.get()
     cpf = cpf_cadastro_entry.get()
-    endereco = endereco_cadastro_entry.get()
+    cep = cep_cadastro_entry.get()
 
     # Validar formato de data (DD-MM-YYYY)
     if not re.match(r'\d{2}-\d{2}-\d{4}', data_nascimento):
@@ -111,6 +89,11 @@ def cadastrar_usuario():
     # Validar formato de CPF (inserir pontos e traço)
     if not re.match(r'\d{3}\.\d{3}\.\d{3}-\d{2}', cpf):
         resultado_label.config(text="Operação falhou! CPF no formato incorreto (inserir pontos e traço).")
+        return
+
+    # Validar formato de CEP
+    if not re.match(r'\d{5}-\d{3}', cep):
+        resultado_label.config(text="Operação falhou! CEP no formato incorreto (XXXXX-XXX).")
         return
 
     # Verifica se o CPF já está cadastrado
@@ -123,7 +106,7 @@ def cadastrar_usuario():
             "nome": nome,
             "data_nascimento": data_nascimento,
             "cpf": cpf,
-            "endereco": endereco
+            "cep": cep
         })
         resultado_label.config(text="Usuário cadastrado com sucesso!")
 
@@ -137,18 +120,24 @@ def criar_conta_corrente():
     if usuario is None:
         resultado_label.config(text="Operação falhou! Não foi encontrado um usuário com o CPF informado.")
     else:
-        numero_conta = len(contas) + 1
-        contas.append({
-            "agencia": "0001",
-            "numero_conta": numero_conta,
-            "usuario": usuario,
-            "saldo": 0,
-            "limite": 500,
-            "extrato": "",
-            "numero_saques": 0,
-            "limite_saques": 3
-        })
-        resultado_label.config(text="Conta corrente criada com sucesso!")
+        # Verifica se o usuário já possui uma conta corrente
+        conta_existente = any(conta["usuario"]["cpf"] == cpf for conta in contas)
+
+        if conta_existente:
+            resultado_label.config(text="Operação falhou! O usuário já possui uma conta corrente.")
+        else:
+            numero_conta = len(contas) + 1
+            contas.append({
+                "agencia": "0001",
+                "numero_conta": numero_conta,
+                "usuario": usuario,
+                "saldo": 0,
+                "limite": 500,
+                "extrato": "",
+                "numero_saques": 0,
+                "limite_saques": 3
+            })
+            resultado_label.config(text="Conta corrente criada com sucesso!")
 
 # Função para realizar transferência
 def transferencia():
@@ -180,6 +169,34 @@ def consultar_saldo():
         resultado_label.config(text=f"O saldo da conta {numero_conta} é R$ {saldo:.2f}")
     else:
         resultado_label.config(text="Conta não encontrada.")
+
+# Função para atualizar limite de saques
+def atualizar_limite_saques():
+    numero_conta = numero_conta_atualizar_limite_entry.get()
+    novo_limite = novo_limite_entry.get()
+
+    conta = next((conta for conta in contas if conta["numero_conta"] == int(numero_conta)), None)
+    if conta is not None:
+        try:
+            novo_limite = int(novo_limite)
+            if novo_limite >= 0:
+                conta['limite_saques'] = novo_limite
+                resultado_label.config(text="Limite de saques atualizado com sucesso.")
+            else:
+                resultado_label.config(text="Operação falhou! O novo limite deve ser um número não negativo.")
+        except ValueError:
+            resultado_label.config(text="Operação falhou! O novo limite deve ser um número inteiro não negativo.")
+    else:
+        resultado_label.config(text="Conta não encontrada.")
+
+# Função para mostrar ajuda sobre a atualização do limite de saques
+def mostrar_ajuda_limite_saques():
+    ajuda_window = tk.Toplevel(root)
+    ajuda_window.title("Ajuda - Limite de Saques")
+
+    ajuda_text = tk.Label(ajuda_window, text="Para atualizar o limite de saques, insira o número da conta e o novo limite desejado.\n"
+                                             "O novo limite deve ser um número inteiro não negativo.")
+    ajuda_text.pack(padx=20, pady=20)
 
 # Função para sair do programa
 def sair():
@@ -218,8 +235,8 @@ data_nascimento_cadastro_label = tk.Label(root, text="Data de Nascimento (DD-MM-
 data_nascimento_cadastro_entry = tk.Entry(root)
 cpf_cadastro_label = tk.Label(root, text="CPF (inserir pontos e traço):")
 cpf_cadastro_entry = tk.Entry(root)
-endereco_cadastro_label = tk.Label(root, text="Endereço:")
-endereco_cadastro_entry = tk.Entry(root)
+cep_cadastro_label = tk.Label(root, text="CEP (XXXXX-XXX):")
+cep_cadastro_entry = tk.Entry(root)
 cadastrar_usuario_button = tk.Button(root, text="Cadastrar Usuário", command=cadastrar_usuario)
 
 criar_conta_corrente_label = tk.Label(root, text="Criar Conta Corrente")
@@ -241,6 +258,15 @@ numero_conta_saldo_label = tk.Label(root, text="Número da Conta:")
 numero_conta_saldo_entry = tk.Entry(root)
 consultar_saldo_button = tk.Button(root, text="Consultar Saldo", command=consultar_saldo)
 
+atualizar_limite_label = tk.Label(root, text="Atualizar Limite de Saques")
+numero_conta_atualizar_limite_label = tk.Label(root, text="Número da Conta:")
+numero_conta_atualizar_limite_entry = tk.Entry(root)
+novo_limite_label = tk.Label(root, text="Novo Limite:")
+novo_limite_entry = tk.Entry(root)
+atualizar_limite_button = tk.Button(root, text="Atualizar Limite", command=atualizar_limite_saques)
+
+ajuda_limite_button = tk.Button(root, text="?", command=mostrar_ajuda_limite_saques)
+
 sair_button = tk.Button(root, text="Sair", command=sair)
 
 # Rótulo para exibir o número da conta selecionada
@@ -248,14 +274,6 @@ numero_conta_label = tk.Label(root, text="", fg="blue")
 
 # Resultado das operações
 resultado_label = tk.Label(root, text="", fg="red")
-
-# Adiciona botão para atualizar limite de saques
-atualizar_limite_label = tk.Label(root, text="Atualizar Limite de Saques")
-numero_conta_atualizar_limite_label = tk.Label(root, text="Número da Conta:")
-numero_conta_atualizar_limite_entry = tk.Entry(root)
-novo_limite_label = tk.Label(root, text="Novo Limite:")
-novo_limite_entry = tk.Entry(root)
-atualizar_limite_button = tk.Button(root, text="Atualizar Limite", command=atualizar_limite_saques)
 
 # Posicionamento de widgets na janela
 saque_label.grid(row=0, column=0)
@@ -287,8 +305,8 @@ data_nascimento_cadastro_label.grid(row=8, column=0)
 data_nascimento_cadastro_entry.grid(row=8, column=1)
 cpf_cadastro_label.grid(row=9, column=0)
 cpf_cadastro_entry.grid(row=9, column=1)
-endereco_cadastro_label.grid(row=10, column=0)
-endereco_cadastro_entry.grid(row=10, column=1)
+cep_cadastro_label.grid(row=10, column=0)
+cep_cadastro_entry.grid(row=10, column=1)
 cadastrar_usuario_button.grid(row=11, column=0)
 
 criar_conta_corrente_label.grid(row=6, column=2)
@@ -316,6 +334,7 @@ numero_conta_atualizar_limite_entry.grid(row=15, column=1)
 novo_limite_label.grid(row=16, column=0)
 novo_limite_entry.grid(row=16, column=1)
 atualizar_limite_button.grid(row=17, column=0)
+ajuda_limite_button.grid(row=17, column=1)
 
 sair_button.grid(row=18, column=5)
 resultado_label.grid(row=19, column=0, columnspan=6)
